@@ -5,6 +5,7 @@ import json
 import pickle
 from nltk.tokenize import sent_tokenize
 import nltk
+nltk.download('punkt')
 import datasets
 from tqdm import tqdm
 import numpy as np
