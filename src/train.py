@@ -1,3 +1,18 @@
+# coding=utf-8
+# Copyright 2020 The JoungheeKim All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
 import torch
 import os
@@ -19,7 +34,6 @@ except ImportError:
 
 from torch.utils.data import (
     DataLoader,
-    Dataset,
 )
 from transformers import (
     AdamW,
@@ -28,176 +42,15 @@ from transformers import (
     BertTokenizer,
     get_linear_schedule_with_warmup,
 )
+from data_utils import IMDBDataset, ResultWriter, set_seed
+
+
 logger = logging.getLogger(__name__)
 
 ## trian name
 TRAIN_NAME = 'split_train_{}_{}.p'
 VALID_NAME = 'split_valid_{}_{}.p'
 AUGMENT_NAME = 'split_augment_{}_{}.p'
-
-def save_pickle(path, data):
-    with open(path, 'wb') as handle:
-        pickle.dump(data, handle, protocol=4)
-
-def load_pickle(path):
-    with open(path, 'rb') as handle:
-        return pickle.load(handle)
-
-def set_seed(args):
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if args.n_gpu > 0:
-        torch.cuda.manual_seed_all(args.seed)
-
-def split_files(args):
-    assert os.path.isfile(args.label_file), 'there is no label files, --label_file [{}]'.format(args.label_file)
-    dirname, filename  = os.path.split(args.label_file)
-    data = load_pickle(args.label_file)
-
-    ## SPLIT data
-    train_idx, leftover_idx, _, leftover_label = train_test_split(list(range(len(data['label']))), data['label'],train_size=args.labeled_data_size, stratify=data['label'])
-    if len(leftover_idx) > args.valid_data_size:
-        valid_idx, unlabel_idx, _, _ = train_test_split(leftover_idx, leftover_label, train_size=args.valid_data_size, stratify=leftover_label)
-    else:
-        valid_idx = leftover_idx
-        unlabel_idx = []
-
-    train_data = dict((key, np.array(item)[train_idx].tolist()) for key, item in zip(data.keys(), data.values()))
-    valid_data = dict((key, np.array(item)[valid_idx].tolist()) for key, item in zip(data.keys(), data.values()))
-    unlabel_data = dict((key, np.array(item)[unlabel_idx].tolist()) for key, item in zip(data.keys(), data.values()))
-
-    if args.unlabel_file is not None and os.path.isfile(args.unlabel_file):
-        additional_data = load_pickle(args.unlabel_file)
-        for key in unlabel_data.keys():
-            unlabel_data[key] += additional_data[key]
-
-    train_path = os.path.join(dirname, TRAIN_NAME.format(args.labeled_data_size, args.valid_data_size))
-    save_pickle(train_path, train_data)
-    try:
-        os.remove(os.path.join(dirname, "cache_" + TRAIN_NAME.format(args.labeled_data_size, args.valid_data_size)))
-    except:
-        pass
-
-    valid_path = os.path.join(dirname, VALID_NAME.format(args.labeled_data_size, args.valid_data_size))
-    save_pickle(valid_path, valid_data)
-    try:
-        os.remove(os.path.join(dirname, "cache_" + VALID_NAME.format(args.labeled_data_size, args.valid_data_size)))
-    except:
-        pass
-
-    augment_path = os.path.join(dirname, AUGMENT_NAME.format(args.labeled_data_size, args.valid_data_size))
-    save_pickle(augment_path, unlabel_data)
-    try:
-        os.remove(os.path.join(dirname, "cache_" + AUGMENT_NAME.format(args.labeled_data_size, args.valid_data_size)))
-    except:
-        pass
-
-    args.train_file = train_path
-    args.valid_file = valid_path
-    args.augment_file = augment_path
-
-class IMDBDataset(Dataset):
-    def __init__(self, file_path, tokenizer, max_len):
-
-        assert os.path.isfile(file_path), 'there is no file please check again. [{}]'.format(file_path)
-
-        self.max_len = max_len
-
-        dirname, filename = os.path.split(file_path)
-        cache_filename = "cache_{}".format(filename)
-        cache_path = os.path.join(dirname, cache_filename)
-        if os.path.isfile(cache_path):
-            logger.info("***** load cache dataset [{}] *****".format(cache_path))
-            label, text, augment_text = load_pickle(cache_path)
-        else:
-            logger.info("***** tokenize dataset [{}] *****".format(file_path))
-
-            data = load_pickle(file_path)
-            label = data['label']
-            text = data['clean_text']
-            augment_text = data['backtranslated_text']
-
-            logger.info("***** dataset size [{}] *****".format(str(len(text))))
-
-            augment_text = [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(t)) for t in augment_text]
-            augment_text = [tokenizer.build_inputs_with_special_tokens(t) for t in augment_text]
-
-            text = [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(t)) for t in text]
-            text = [tokenizer.build_inputs_with_special_tokens(t) for t in text]
-
-            ## save tokenized file
-            save_pickle(cache_path, (label, text, augment_text))
-
-        self.augment_text = augment_text
-        self.text = text
-        self.label = label
-
-    def __len__(self):
-        return len(self.label)
-
-    def __getitem__(self, item):
-        ## real text
-        if len(self.text[item]) > self.max_len:
-            text = torch.tensor(
-                [self.text[item][0]]
-                + self.text[item][-(self.max_len - 1): -1]
-                + [self.text[item][-1]],
-                dtype=torch.long,
-            )
-        else:
-            text = torch.tensor(self.text[item], dtype=torch.long)
-
-        ## augmented text
-        if len(self.augment_text[item]) > self.max_len:
-            augment_text = torch.tensor(
-                [self.augment_text[item][0]]
-                + self.augment_text[item][-(self.max_len - 1): -1]
-                + [self.augment_text[item][-1]],
-                dtype=torch.long,
-            )
-        else:
-            augment_text = torch.tensor(self.augment_text[item], dtype=torch.long)
-
-        ## label
-        label = torch.tensor(self.label[item], dtype=torch.long)
-        return text, augment_text, label
-
-
-class ResultWriter:
-    def __init__(self, directory):
-
-        self.dir = directory
-        self.hparams = None
-        self.load()
-        self.writer = dict()
-
-    def update(self, args, **results):
-        now = datetime.now()
-        date = "%s-%s %s:%s" % (now.month, now.day, now.hour, now.minute)
-        self.writer.update({"date": date})
-        self.writer.update(results)
-        self.writer.update(vars(args))
-
-        if self.hparams is None:
-            self.hparams = pd.DataFrame(self.writer, index=[0])
-        else:
-            self.hparams = self.hparams.append(self.writer, ignore_index=True)
-        self.save()
-
-    def save(self):
-        assert self.hparams is not None
-        self.hparams.to_csv(self.dir, index=False)
-
-    def load(self):
-        path = os.path.split(self.dir)[0]
-        if not os.path.exists(path):
-            os.makedirs(path)
-            self.hparams = None
-        elif os.path.exists(self.dir):
-            self.hparams = pd.read_csv(self.dir)
-        else:
-            self.hparams = None
 
 ## add padding to make it parallel processing
 def collate(data: List[torch.Tensor]):
@@ -488,18 +341,6 @@ if __name__ == "__main__":
 
     # Required parameters
     parser.add_argument(
-        "--label_file",
-        default=None,
-        type=str,
-        help="The input labeled data file (pickle).",
-    )
-    parser.add_argument(
-        "--unlabel_file",
-        default=None,
-        type=str,
-        help="The input unlabeled data file (pickle).",
-    )
-    parser.add_argument(
         "--train_file",
         default=None,
         type=str,
@@ -535,25 +376,6 @@ if __name__ == "__main__":
         default='experiments/experiment.csv',
         help="The output directory where the model predictions and checkpoints will be written.",
     )
-
-    parser.add_argument(
-        "--model_name_or_path",
-        default=None,
-        type=str,
-        help="The model checkpoint for weights initialization. Leave None if you want to train a model from scratch.",
-    )
-    parser.add_argument(
-        "--labeled_data_size",
-        default=20,
-        type=int,
-        help="labeled data size for train",
-    )
-    parser.add_argument(
-        "--valid_data_size",
-        default=3000,
-        type=int,
-        help="validation data size",
-    )
     parser.add_argument(
         "--num_labels", default=2, type=int, help="Number of class labels.",
     )
@@ -582,13 +404,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--label_batch_size",
-        default=32,
+        default=16,
         type=int,
         help="Batch size for training.",
     )
     parser.add_argument(
         "--unlabel_batch_size",
-        default=96,
+        default=48,
         type=int,
         help="Batch size for training.",
     )
@@ -605,13 +427,13 @@ if __name__ == "__main__":
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
     parser.add_argument(
-        "--train_max_len", default=512, type=int, help="Maximum sequence length.",
+        "--train_max_len", default=128, type=int, help="Maximum sequence length.",
     )
     parser.add_argument(
-        "--eval_max_len", default=512, type=int, help="Maximum sequence length.",
+        "--eval_max_len", default=128, type=int, help="Maximum sequence length.",
     )
     parser.add_argument(
-        "--learning_rate", default=2e-5, type=float, help="The initial learning rate for Adam."
+        "--learning_rate", default=3e-5, type=float, help="The initial learning rate for Adam."
     )
     parser.add_argument(
         "--weight_decay", default=0.01, type=float, help="Weight decay if we apply some."
@@ -687,7 +509,7 @@ if __name__ == "__main__":
     args.device = device
 
     # Set seed
-    set_seed(args)
+    set_seed(args.seed)
 
     if args.test_file is None and args.do_eval:
         raise ValueError(
@@ -705,22 +527,18 @@ if __name__ == "__main__":
             )
         )
     if args.do_train:
-        if args.label_file is None and (args.train_file is None or args.valid_file is None):
+        if args.train_file is None or args.valid_file is None:
             raise ValueError(
-                "Cannot do train without train and valid data. Either supply a file to --label_file or --train_file & --valid_file "
+                "Cannot do train without train and valid data. Either supply a file to --train_file & --valid_file "
             )
-        if args.do_uda and (args.augment_file is None and args.label_file is None):
+        if args.do_uda and args.augment_file is None:
             raise ValueError(
                 "Cannot do train EDA training without augmented data. Either supply a file to --augment_file or --label_file to split data "
             )
 
-        if args.train_file is None or args.valid_file is None:
-            split_files(args)
-        elif args.do_uda and args.augment_file is None:
-            split_files(args)
 
     if args.do_eval:
-        if args.do_train is None and args.pre_trained_model is None:
+        if args.do_train is None and args.pretrained_model is None:
             raise ValueError(
                 "Cannot do evalue without trained Model. Put a folder which contain trained Model to --pretrained_model"
             )
@@ -738,11 +556,11 @@ if __name__ == "__main__":
         args.fp16,
     )
 
-    config = BertConfig.from_pretrained('bert-base-uncased' if args.model_name_or_path is None else args.model_name_or_path,
+    config = BertConfig.from_pretrained('bert-base-uncased' if args.pretrained_model is None else args.pretrained_model,
         num_labels=args.num_labels,
     )
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased' if args.model_name_or_path is None else args.model_name_or_path,)
-    model = BertForSequenceClassification.from_pretrained('bert-base-uncased' if args.model_name_or_path is None else args.model_name_or_path,
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased' if args.pretrained_model is None else args.pretrained_model,)
+    model = BertForSequenceClassification.from_pretrained('bert-base-uncased' if args.pretrained_model is None else args.pretrained_model,
         config=config,
     )
 
@@ -793,13 +611,3 @@ if __name__ == "__main__":
         )
         results.update(**test_results)
         writer.update(args, **results)
-
-
-
-
-
-
-
-
-
-
