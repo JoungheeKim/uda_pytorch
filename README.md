@@ -6,16 +6,49 @@ In this implementation, I focus on IMDB Sentiment Analysis(NLP Task).
 Because of low resources(1 GPU RTX 2080ti), test is only conducted with small token length(128).
 Please aware that BERT in this implementation is pretrained from from huggingface(bert-base-uncased).
 
+
 ![](imgs/overview_architecture.png)
+
+There is 4 steps to reproduce results in paper
+
+1. Back-Translation(Data Augmentation)
+2. Split Dataset into train file for supervised, train file for consistency, valid file 
+3. Masked Language Modeling to make task adapted pre-trained Model
+4. Training with consistency Loss(UDA)
 
 Model                  | Number of labeled examples | Error rate(this implementation)
 ---------------------- | :------------------------: | :--------:
 BERT                   | 25,000                     | 5.69
-BERT(fine-tuned)       | 25,000                     | 5.69
-BERT                   | 20                         | 29.34
-BERT(fine-tuned)       | 20                         | 29.34
+BERT                   | 20                         | 29.22
+BERT(task adapted)     | 20                         | 29.34
 UDA                    | 20                         | **8.20**
-UDA(fine-tuned)        | 20                         | **8.20**
+UDA(task adapted)      | 20                         | **8.20**
+
+## Requirements
+The code is tested on Python 3.7 and Pytorch 1.7.1
+Detail Description about develop environment is provided with [`requirements.txt`](requirements.txt)  
+[DockerFile](Dockerfile) is also supported in gitRepos. So feel free to enjoy it by using few commands
+
+## Instructions
+
+#### [1] Back-Translation(Data Augmentation)
+Back-translation need a long time to run.
+```shell
+# [1] Back-Translation(Data Augmentation)
+bash scripts/run_backtranslation.sh
+
+# [2] Split Dataset
+bash scripts/split_data.sh
+
+# [3] Masked Language Modeling
+
+
+# [4.1] Run supervised learning
+# Baseline accuracy: around 70%
+bash scripts/run_base.sh
+
+# [4.2]
+```
 
 
 ## Comments
