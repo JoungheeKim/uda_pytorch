@@ -11,8 +11,11 @@ Please aware that BERT in this implementation is pretrained from from huggingfac
 Model                  | Number of labeled examples | Error rate(this implementation)
 ---------------------- | :------------------------: | :--------:
 BERT                   | 25,000                     | 5.69
+BERT(finetuned)        | 25,000                     | 5.69
 BERT                   | 20                         | 29.34
+BERT(finetuned)        | 20                         | 29.34
 UDA                    | 20                         | **8.20**
+UDA(finetuned)         | 20                         | **8.20**
 
 
 ## Comments
