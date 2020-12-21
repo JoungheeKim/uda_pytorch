@@ -1,4 +1,4 @@
-# Unsupervised Data Augmentation for consistency Training, NeurIPS 2020
+# UDA Pytorch
 This is pytorch implementation project of [**Unsupervised Data Augmentation for consistency Training**](https://arxiv.org/abs/1904.12848)
 
 
