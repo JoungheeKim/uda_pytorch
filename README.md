@@ -1,10 +1,22 @@
 # UDA Pytorch
 This is pytorch implementation project of [**Unsupervised Data Augmentation for consistency Training, NeurIPS 2020**](https://arxiv.org/abs/1904.12848)
 
-
 ## Overview
+In this implementation, I focus on IMDB Sentiment Analysis(NLP Task).
+Because of low resources(1 GPU RTX 2080ti), test is only conducted with small token length(128).
+Please aware that BERT in this implementation is pretrained from from huggingface(bert-base-uncased).
+
+Model                  | Number of labeled examples | Error rate(this implementation)
+---------------------- | :------------------------: | :--------:
+BERT                   | 25,000                     | 5.69
+BERT                   | 20                         | 29.34
+UDA                    | 20                         | **8.20**
 
 
+## Comments
+Unlike other supervised-learning, This implementation is very sensitive to many hyper-parameter such as `confidence_beta`, `unlabel_batch_size`, `train_max_len`.
+Even `seed` make big fluctuating in test accuracy.
+So hyper-parameter search is highly recommended if there is no good training or evaluation accuracy.
 
 ## Reference
 - [[BLOG]](https://nlp.stanford.edu/blog/maximum-likelihood-decoding-with-rnns-the-good-the-bad-and-the-ugly/#:~:text=Temperature%20sampling%20is%20a%20standard,semantic%20distortions%20in%20the%20process.) Maximum Likelihood Decoding with RNNs - the good, the bad, and the ugly
