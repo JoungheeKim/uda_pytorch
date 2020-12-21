@@ -51,28 +51,28 @@ def split_files(args):
 
     if args.train_file is None:
         args.train_file = TRAIN_NAME.format(args.labeled_data_size, args.valid_data_size)
-    train_path = os.path.join(dirname, args.train_file)
+    train_path = os.path.join(args.output_dir, args.train_file)
     save_pickle(train_path, train_data)
     try:
-        os.remove(os.path.join(dirname, "cache_" + args.train_file))
+        os.remove(os.path.join(args.output_dir, "cache_" + args.train_file))
     except:
         pass
 
     if args.valid_file is None:
         args.valid_file = VALID_NAME.format(args.labeled_data_size, args.valid_data_size)
-    valid_path = os.path.join(dirname, args.valid_file)
+    valid_path = os.path.join(args.output_dir, args.valid_file)
     save_pickle(valid_path, valid_data)
     try:
-        os.remove(os.path.join(dirname, "cache_" + args.valid_file))
+        os.remove(os.path.join(args.output_dir, "cache_" + args.valid_file))
     except:
         pass
 
     if args.augment_file is None:
         args.augment_file = AUGMENT_NAME.format(args.labeled_data_size, args.valid_data_size)
-    augment_path = os.path.join(dirname, args.augment_file)
+    augment_path = os.path.join(args.output_dir, args.augment_file)
     save_pickle(augment_path, unlabel_data)
     try:
-        os.remove(os.path.join(dirname, "cache_" + args.augment_file))
+        os.remove(os.path.join(args.output_dir, "cache_" + args.augment_file))
     except:
         pass
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
             )
 
     ## make save path
-    os.makedirs(args.save_dir, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
 
     ## set Seed
     set_seed(args.seed)
