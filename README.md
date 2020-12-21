@@ -6,6 +6,8 @@ In this implementation, I focus on IMDB Sentiment Analysis(NLP Task).
 Because of low resources(1 GPU RTX 2080ti), test is only conducted with small token length(128).
 Please aware that BERT in this implementation is pretrained from from huggingface(bert-base-uncased).
 
+![](imgs/overview_architecture.png)
+
 Model                  | Number of labeled examples | Error rate(this implementation)
 ---------------------- | :------------------------: | :--------:
 BERT                   | 25,000                     | 5.69
