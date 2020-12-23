@@ -4,7 +4,7 @@ LABEL_BATCH_SIZE=16
 UNLABEL_BATCH_SIZE=48
 EVAL_BATCH_SIZE=64
 OUTPUT_DIR=output
-EXPERIMENT_DIR=experiments/uda_20_without_pretrained.csv
+EXPERIMENT_DIR=experiments/experiment.csv
 
 LOGGING_STEPS=20
 TRAIN_MAX_LEN=128

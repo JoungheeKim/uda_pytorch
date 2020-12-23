@@ -4,7 +4,7 @@ LABEL_BATCH_SIZE=16
 UNLABEL_BATCH_SIZE=48
 EVAL_BATCH_SIZE=64
 OUTPUT_DIR=output
-EXPERIMENT_DIR=experiments/uda_20_without_pretrained.csv
+EXPERIMENT_DIR=experiments/experiment.csv
 
 LOGGING_STEPS=20
 TRAIN_MAX_LEN=128
@@ -19,6 +19,7 @@ AUGMENT_FILE=resource/uda_augment.p
 TEST_FILE=resource/test.p
 TSA=linear
 CONFIDENCE_BETA=0.53
+PRETRAINED_MODEL=pretrain_mlm
 
 python src/train.py \
       --train_file=${TRAIN_FILE} \
@@ -43,4 +44,5 @@ python src/train.py \
       --tsa=${TSA} \
       --gradient_accumulation_steps=${ACCUMULATION_STEPS} \
       --fp16 \
+      --pretrained_model=${PRETRAINED_MODEL} \
       --confidence_beta=${CONFIDENCE_BETA}

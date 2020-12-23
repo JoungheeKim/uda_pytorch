@@ -8,7 +8,7 @@ TEST_FILE=resource/test.p
 OUTPUT_DIR=output
 EXPERIMENT_DIR=experiments/experiment.csv
 
-LOGGING_STEPS=20
+LOGGING_STEPS=10
 TRAIN_MAX_LEN=128
 EVAL_MAX_LEN=128
 MAX_STEP=3000
@@ -18,7 +18,7 @@ LEARNING_RATE=3e-5
 TRAIN_FILE=resource/uda_train.p
 VALID_FILE=resource/uda_valid.p
 TEST_FILE=resource/test.p
-
+PRETRAINED_MODEL=pretrain_mlm
 
 python src/train.py \
     --output_dir=${OUTPUT_DIR} \
@@ -37,6 +37,7 @@ python src/train.py \
     --test_file=${TEST_FILE} \
     --seed=${SEED} \
     --learning_rate=${LEARNING_RATE} \
+    --pretrained_model=${PRETRAINED_MODEL} \
     --fp16
 
 

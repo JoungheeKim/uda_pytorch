@@ -21,7 +21,7 @@ BERT                   | 25,000                     | 4.51                  | 5.
 BERT                   | 20                         | 11.72                 | 29.22
 UDA                    | 20                         | 4.78                  | 9.98
 BERT(task adapted)     | 20                         | 6.50                  | 8.79
-UDA(task adapted)      | 20                         | **4.20**              |  
+UDA(task adapted)      | 20                         | **4.20**              | **8.09** 
 
 ## Requirements
 The code is tested on Python 3.7 and Pytorch 1.7.1
