@@ -2,13 +2,9 @@
 This is pytorch implementation project of [**Unsupervised Data Augmentation for consistency Training, NeurIPS 2020**](https://arxiv.org/abs/1904.12848)
 
 ## Overview
-In this implementation, I focus on IMDB Sentiment Analysis(NLP Task).
-Because of low resources(1 GPU RTX 2080ti), test is only conducted with small token length(128).
-Please aware that BERT in this implementation is pretrained from from huggingface(bert-base-uncased).
-
-
+Please aware that BERT in this implementation is pretrained from huggingface(bert-base-uncased).
 ![](imgs/overview_architecture.png)
-
+In this implementation, I focus on IMDB Sentiment Analysis(NLP Task).
 There is 4 steps to reproduce results in paper
 
 1. Back-Translation(Data Augmentation)
@@ -16,13 +12,16 @@ There is 4 steps to reproduce results in paper
 3. Masked Language Modeling to make task adapted pre-trained Model
 4. Training with consistency Loss(UDA)
 
-Model                  | Number of labeled examples | Error rate(this implementation)
----------------------- | :------------------------: | :--------:
-BERT                   | 25,000                     | 5.69
-BERT                   | 20                         | 29.22
-BERT(task adapted)     | 20                         | 29.34
-UDA                    | 20                         | **8.20**
-UDA(task adapted)      | 20                         | **8.20**
+Because of low resources(1 GPU RTX 2080ti), test is only conducted with small token length(128).
+Unlike paper's result, this implementation only use small model(bert-base-uncased). So
+
+Model                  | Number of labeled examples | Error rate(**Paper**) | Error rate(this implementation)
+---------------------- | :------------------------: | :-------------------: | :-----------------------------: 
+BERT                   | 25,000                     | 4.51                  | 5.69
+BERT                   | 20                         | 11.72                 | 29.22
+UDA                    | 20                         | 4.78                  | 9.98
+BERT(task adapted)     | 20                         | 6.50                  | 8.79
+UDA(task adapted)      | 20                         | **4.20**              |  
 
 ## Requirements
 The code is tested on Python 3.7 and Pytorch 1.7.1
@@ -41,13 +40,23 @@ bash scripts/run_backtranslation.sh
 bash scripts/split_data.sh
 
 # [3] Masked Language Modeling
+bash scripts/run_mlm.sh
 
-
-# [4.1] Run supervised learning
-# Baseline accuracy: around 70%
+# [4.1] Run supervised learning(20 samples) without [3] process 
+# accuracy: around 70%
 bash scripts/run_base.sh
 
-# [4.2]
+# [4.2] Run supervised learning(20 samples) with [3] process model 
+# accuracy: around 91%
+bash scripts/run_base_with_pretrained.sh
+
+# [4.3] Run UDA without [3] Process
+# accuracy : around 90%
+bash scripts/run_uda_20.sh
+
+# [4.4] Run UDA with [3] Process model
+# accuracy : around 
+bash scripts/run_uda_20_with_pretrained.sh
 ```
 
 
