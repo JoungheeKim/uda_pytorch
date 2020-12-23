@@ -4,6 +4,7 @@ This is pytorch implementation project of [**Unsupervised Data Augmentation for 
 ## Overview
 Please aware that BERT in this implementation is pretrained from huggingface(bert-base-uncased).
 ![](imgs/overview_architecture.png)
+
 In this implementation, I focus on IMDB Sentiment Analysis(NLP Task).
 There is 4 steps to reproduce results in paper
 
@@ -12,8 +13,10 @@ There is 4 steps to reproduce results in paper
 3. Masked Language Modeling to make task adapted pre-trained Model
 4. Training with consistency Loss(UDA)
 
-Because of low resources(1 GPU RTX 2080ti), test is only conducted with small token length(128).
-Unlike paper's result, this implementation only use small model(bert-base-uncased). So
+Because of low resources(1 GPU RTX 2080ti), test is only conducted with **small token length(128).**
+Unlike paper's result, this implementation only use small model(bert-base-uncased).
+So there is little gap between paper's results and this implementation. 
+But i'm pretty sure that it can generate better result with small changes such as max length of inputs or batch size.
 
 Model                  | Number of labeled examples | Error rate(**Paper**) | Error rate(this implementation)
 ---------------------- | :------------------------: | :-------------------: | :-----------------------------: 
@@ -29,9 +32,7 @@ Detail Description about develop environment is provided with [`requirements.txt
 [DockerFile](Dockerfile) is also supported in gitRepos. So feel free to enjoy it by using few commands
 
 ## Instructions
-
-#### [1] Back-Translation(Data Augmentation)
-Back-translation need a long time to run.
+Following this instruction give you exact matched results.
 ```shell
 # [1] Back-Translation(Data Augmentation)
 bash scripts/run_backtranslation.sh
@@ -55,10 +56,9 @@ bash scripts/run_base_with_pretrained.sh
 bash scripts/run_uda_20.sh
 
 # [4.4] Run UDA with [3] Process model
-# accuracy : around 
+# accuracy : around 92%
 bash scripts/run_uda_20_with_pretrained.sh
 ```
-
 
 ## Comments
 Unlike other supervised-learning, This implementation is very sensitive to many hyper-parameter such as `confidence_beta`, `unlabel_batch_size`, `train_max_len`.
