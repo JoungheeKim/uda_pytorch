@@ -28,8 +28,7 @@ UDA(task adapted)      | 20                         | **4.20**              | **
 
 ## Requirements
 The code is tested on Python 3.7 and Pytorch 1.7.1
-Detail Description about develop environment is provided with [`requirements.txt`](requirements.txt)  
-[DockerFile](Dockerfile) is also supported in gitRepos. So feel free to enjoy it by using few commands
+Detail Description about develop environment is provided with [`requirements.txt`](requirements.txt) [DockerFile](Dockerfile) is also supported in gitRepos. So feel free to enjoy it by using few commands
 
 ## Instructions
 Following this instruction give you exact matched results.
@@ -62,8 +61,7 @@ bash scripts/run_uda_20_with_pretrained.sh
 
 ## Comments
 Unlike other supervised-learning, This implementation is very sensitive to many hyper-parameter such as `confidence_beta`, `unlabel_batch_size`, `train_max_len`.
-Even `seed` make big fluctuating in test accuracy.
-So hyper-parameter search is highly recommended if there is no good training or evaluation accuracy.
+Even `seed` make big fluctuating in test accuracy. So hyper-parameter search is highly recommended if there is no good training or evaluation accuracy.
 
 ## Reference
 - [[BLOG]](https://nlp.stanford.edu/blog/maximum-likelihood-decoding-with-rnns-the-good-the-bad-and-the-ugly/#:~:text=Temperature%20sampling%20is%20a%20standard,semantic%20distortions%20in%20the%20process.) Maximum Likelihood Decoding with RNNs - the good, the bad, and the ugly
